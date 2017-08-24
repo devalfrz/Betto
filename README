@@ -1,0 +1,22 @@
+Betto: Fish feeder and maintenance system using Adafruit SHARP 
+Memory Display and DS18B20 temperature sensor.
+
+This software runs on Arduino Yun
+
+Alfredo Rius
+alfredo.rius@gmail.com 
+
+v1.1   2017-08-20
+Added Feed Button
+
+v1.0   2017-08-18
+Upgraded to Arduino Yun
+Added Feeder
+Show feeder remaining time
+Show elapsed time
+
+v0.1   2017-08-16
+Show temperature
+Show max temperature
+Show min temperature
+
