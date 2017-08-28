@@ -8,6 +8,12 @@
   Alfredo Rius
   alfredo.rius@gmail.com 
 
+  v1.2   2017-08-25
+  Servo detaches and attaches when needed
+
+  v1.1.1 2017-08-25
+  Reset feed counter after feeding button
+  
   v1.1   2017-08-20
   Added Feed Button
   
@@ -25,7 +31,7 @@
 *********************************************************************/
 
 
-#define FIRMWARE " v1.1 "
+#define FIRMWARE " v1.2 "
 
 
 #include <Adafruit_GFX.h>
@@ -45,10 +51,11 @@
 
 #define SERVO_MAX 85
 #define SERVO_MIN 65
+#define STEP_TIME 20 //ms per step
 
 // Other constants
-#define FEED_PERIOD (long)12*60*60 //Every 12 hours
-#define FEED_TIMES 3
+#define FEED_PERIOD (long)8*60*60 //Every 8 hours
+#define FEED_TIMES 2
 
 #define FREQ_DIV 20 // 20 seconds
 
@@ -153,31 +160,41 @@ void setFeedState(){
   feed_state = 1;
 }
 
-void feed(int times, int d){
+void feed(int times){
   int pos,i;
   
   digitalWrite(LED_BUILTIN, HIGH);
-  
-  // Reset everything
-  feed_state = 0;
+
+  // Start Servo
+  servo.attach(SERVO);
+  // Set servo in a defined location
+  servo.write(SERVO_MIN);
 
   // Feed fish
   for(i=0;i<times;i++){
-    for (pos = SERVO_MIN; pos <= SERVO_MAX; pos += 1) { // goes from 0 degrees to 180 degrees
-      // in steps of 1 degree
-      servo.write(pos);              // tell servo to go to position in variable 'pos'
-      delay(d);                       // waits 15ms for the servo to reach the position
+    for (pos = SERVO_MIN; pos <= SERVO_MAX; pos += 1) {
+      servo.write(pos);
+      delay(STEP_TIME);
     }
-    for (pos = SERVO_MAX; pos >= SERVO_MIN; pos -= 1) { // goes from 180 degrees to 0 degrees
-      servo.write(pos);              // tell servo to go to position in variable 'pos'
-      delay(d);                       // waits 15ms for the servo to reach the position
+    for (pos = SERVO_MAX; pos >= SERVO_MIN; pos -= 1) {
+      servo.write(pos);
+      delay(STEP_TIME);
     }
   }
-  
+
+  // Reset feed counter
+  feed_count = FEED_PERIOD;
+
+  servo.detach();
+  digitalWrite(SERVO, LOW);
+
   digitalWrite(LED_BUILTIN, LOW);
   
   if(!command)
       displayAll();
+
+  // Reset everything
+  feed_state = 0;
 }
 
 
@@ -204,19 +221,17 @@ void setup(void)
 {  
   pinMode(LED_BUILTIN,OUTPUT);
   pinMode(BUTTON,INPUT_PULLUP);
-
-  digitalWrite(LED_BUILTIN, HIGH);
-
+  digitalWrite(LED_BUILTIN,HIGH);
+  pinMode(SERVO,OUTPUT);
 
   // Start Servo
   servo.attach(SERVO);
   // Set servo in a defined location
   servo.write(SERVO_MIN);
   
-  // Enable Servo
-  delay(100);
-  digitalWrite(LED_BUILTIN, LOW);
-
+  delay(200);
+  servo.detach();
+  digitalWrite(LED_BUILTIN,LOW);
 
   // start & clear the display
   display.begin();
@@ -247,7 +262,7 @@ void loop(void)
   if(!command)
     display.refresh();
   if(feed_state){
-    feed(FEED_TIMES,20);
+    feed(FEED_TIMES);
   }
   delay(100);
 }
